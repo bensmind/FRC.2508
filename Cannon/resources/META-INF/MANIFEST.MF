@@ -1,6 +1,6 @@
-MIDlet-Name: ShirtCannon
+MIDlet-Name: Cannon
 MIDlet-Version: 1.0.0
 MIDlet-Vendor: FIRST
-MIDlet-1: Main, , org.first.team2508.armada.shirt.cannon.Main
+MIDlet-1: Main, , com.frc2508.cannon.Main
 MicroEdition-Profile: IMP-1.0
 MicroEdition-Configuration: CLDC-1.1

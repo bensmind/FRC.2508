@@ -5,7 +5,7 @@
 /* the project.                                                               */
 /*----------------------------------------------------------------------------*/
 
-package org.first.team2508.armada.shirt.cannon;
+package com.frc2508.cannon;
 
 
 import edu.wpi.first.wpilibj.CANJaguar;
@@ -55,7 +55,6 @@ public class Main extends SimpleRobot {
       } catch (InterruptedException ex) {
         ex.printStackTrace();
       }
-
     }
     
     /**
