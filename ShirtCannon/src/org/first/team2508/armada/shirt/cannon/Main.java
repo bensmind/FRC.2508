@@ -8,7 +8,9 @@
 package org.first.team2508.armada.shirt.cannon;
 
 
+import edu.wpi.first.wpilibj.CANJaguar;
 import edu.wpi.first.wpilibj.SimpleRobot;
+import edu.wpi.first.wpilibj.can.CANTimeoutException;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -29,6 +31,30 @@ public class Main extends SimpleRobot {
      * This function is called once each time the robot enters operator control.
      */
     public void operatorControl() {
+        CANJaguar jag1;
+      try {
+        jag1 = new CANJaguar(1, CANJaguar.ControlMode.kSpeed);
+        jag1.setSpeedReference(CANJaguar.SpeedReference.kQuadEncoder);
+        jag1.setSafetyEnabled(false);
+        //jag1.configMaxOutputVoltage(100);
+        jag1.configEncoderCodesPerRev(250);
+        jag1.setPID(.1, .05, 0);
+        jag1.enableControl();
+        double speed = 50; 
+        while (isOperatorControl() && isEnabled()) {
+            if(speed > 1000){
+              speed = -1000;
+            }
+          
+            jag1.setX(speed);
+            speed++;
+            Thread.sleep(10);
+          }
+      } catch (CANTimeoutException ex) {
+        ex.printStackTrace();
+      } catch (InterruptedException ex) {
+        ex.printStackTrace();
+      }
 
     }
     
