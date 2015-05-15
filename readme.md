@@ -1,4 +1,5 @@
 # FRC.2508
 
-## Dev Setup
-- [NetBeans Setup Guide](http://wpilib.screenstepslive.com/s/3120/m/7885/l/79405-installing-the-java-development-tools)
+http://www.oracle.com/technetwork/java/javase/downloads/index.html
+
+http://www.ni.com/download/first-robotics-software-2015/5112/en/
