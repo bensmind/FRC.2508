@@ -74,18 +74,25 @@ public class Main extends SimpleRobot {
         rotateStick = new Joystick(2);
         
         robotDrive = new RobotDrive(motors[1], motors[0], motors[2], motors[3]);
+        robotDrive.setInvertedMotor(RobotDrive.MotorType.kRearLeft, true);
+        
         double gearRatio = 12.0;
         double maxRPM = 5310.0;
         robotDrive.setMaxOutput(maxRPM / gearRatio);
         
         while (isOperatorControl() && isEnabled()) {
-            System.out.println("x: " + moveStick.getX());
-            System.out.println("y: " + moveStick.getY());
-            try{
-            System.out.println("CAN 8 X speed: " +motors[0].getX());
-            }
-            catch(CANTimeoutException ex){}
-            robotDrive.mecanumDrive_Polar(moveStick.getY(), moveStick.getX(), rotateStick.getTwist());
+            double inX = moveStick.getX();
+            double inY = moveStick.getY();
+            double inTwist = moveStick.getTwist();
+            System.out.println("x: " + inX);
+            System.out.println("y: " + inY);
+            System.out.println("twist: " + inTwist);
+
+            double deadBand = .02;
+            double x = inX > deadBand || inX < -1 * deadBand ? inX : 0;
+            double y = inY > deadBand || inY < -1 * deadBand ? inY : 0;
+            
+            robotDrive.mecanumDrive_Cartesian(x, y, inTwist,0);
             Timer.delay(.01);
         }        
     }
