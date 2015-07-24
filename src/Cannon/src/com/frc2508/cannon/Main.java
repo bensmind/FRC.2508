@@ -9,7 +9,10 @@ package com.frc2508.cannon;
 
 
 import edu.wpi.first.wpilibj.CANJaguar;
+import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.RobotDrive;
 import edu.wpi.first.wpilibj.SimpleRobot;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.can.CANTimeoutException;
 
 /**
@@ -27,34 +30,64 @@ public class Main extends SimpleRobot {
         
     }
 
-    /**
+    CANJaguar[] motors = new CANJaguar[4];
+    
+    RobotDrive robotDrive;
+
+    Joystick moveStick, rotateStick;
+    /*
      * This function is called once each time the robot enters operator control.
-     */
-    public void operatorControl() {
-        CANJaguar jag1;
-      try {
-        jag1 = new CANJaguar(1, CANJaguar.ControlMode.kSpeed);
-        jag1.setSpeedReference(CANJaguar.SpeedReference.kQuadEncoder);
-        jag1.setSafetyEnabled(false);
-        //jag1.configMaxOutputVoltage(100);
-        jag1.configEncoderCodesPerRev(250);
-        jag1.setPID(.1, .05, 0);
-        jag1.enableControl();
-        double speed = 50; 
+     */    
+    private void configJaguar(int index, int id)
+    {
+        try
+        {
+            CANJaguar jag = new CANJaguar(id, CANJaguar.ControlMode.kSpeed);
+            jag.setSpeedReference(CANJaguar.SpeedReference.kQuadEncoder);
+            jag.setSafetyEnabled(false);
+            //jag.configMaxOutputVoltage(100);
+            jag.configEncoderCodesPerRev(360);
+            jag.setPID(.12, .02, 0);
+            jag.enableControl();
+            
+             motors[index] = jag;
+        } 
+        catch (CANTimeoutException ex) 
+        {
+            ex.printStackTrace();
+        }
+    }
+
+    public void configureJaguars()
+    {
+        configJaguar(0, 8);
+        configJaguar(1, 2);
+        configJaguar(2, 3);
+        configJaguar(3, 4);
+        
+    }
+    public void operatorControl() 
+    {
+        configureJaguars();
+        
+        moveStick = new Joystick(1);
+        rotateStick = new Joystick(2);
+        
+        robotDrive = new RobotDrive(motors[1], motors[0], motors[2], motors[3]);
+        double gearRatio = 12.0;
+        double maxRPM = 5310.0;
+        robotDrive.setMaxOutput(maxRPM / gearRatio);
+        
         while (isOperatorControl() && isEnabled()) {
-            if(speed > 1000){
-              speed = -1000;
+            System.out.println("x: " + moveStick.getX());
+            System.out.println("y: " + moveStick.getY());
+            try{
+            System.out.println("CAN 8 X speed: " +motors[0].getX());
             }
-          
-            jag1.setX(speed);
-            speed++;
-            Thread.sleep(10);
-          }
-      } catch (CANTimeoutException ex) {
-        ex.printStackTrace();
-      } catch (InterruptedException ex) {
-        ex.printStackTrace();
-      }
+            catch(CANTimeoutException ex){}
+            robotDrive.mecanumDrive_Polar(moveStick.getY(), moveStick.getX(), rotateStick.getTwist());
+            Timer.delay(.01);
+        }        
     }
     
     /**
