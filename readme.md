@@ -5,5 +5,6 @@
 - [First Robotics Software Suite](http://www.ni.com/download/first-robotics-software-2015/5112/en/)
 
 ### Driver Station Setup
+- Set static IP to `10.25.08.100`
 - On the setup tab enter team number
 - Set protocols to `14 DS & FMS`
