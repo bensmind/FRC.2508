@@ -7,12 +7,15 @@
 package com.frc2508.cannon;
 
 import edu.wpi.first.wpilibj.CANJaguar;
+import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.Relay;
 import edu.wpi.first.wpilibj.RobotDrive;
 import edu.wpi.first.wpilibj.SimpleRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.can.CANTimeoutException;
+import edu.wpi.first.wpilibj.command.Command;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -29,12 +32,14 @@ public class Main extends SimpleRobot {
     public void autonomous() {
 
     }
-
+    
+    Relay firingSolenoidRelay;
+        
     CANJaguar[] motors = new CANJaguar[4];
 
     RobotDrive robotDrive;
 
-    Joystick moveStick, rotateStick;
+    Gamepad gamepad;
     /*
      * This function is called once each time the robot enters operator control.
      */
@@ -60,14 +65,17 @@ public class Main extends SimpleRobot {
         configJaguar(1, 2);
         configJaguar(2, 3);
         configJaguar(3, 4);
-
+    }
+    
+    public void configureSpikes(){
+        firingSolenoidRelay = new Relay(1, Relay.Direction.kForward);
     }
 
     public void operatorControl() {
         configureJaguars();
-
-        moveStick = new Joystick(1);
-        rotateStick = new Joystick(2);
+        configureSpikes();
+        
+        gamepad = new Gamepad(1);
 
         robotDrive = new RobotDrive(motors[1], motors[0], motors[2], motors[3]);
 
@@ -75,17 +83,29 @@ public class Main extends SimpleRobot {
 
         double gearRatio = 12.0;
         double maxRPM = 5310.0;
-        robotDrive.setMaxOutput((maxRPM / gearRatio) / 5);
+        robotDrive.setMaxOutput((maxRPM / gearRatio) / 4.5);
 
         while (isOperatorControl() && isEnabled()) {
             //doMecanum();
-            //doTank();            
+            //doTank();
+            boolean aButton = gamepad.getButtonA().get();
+            System.out.println("A Button state: " + aButton);
+            
+            if(aButton)
+            {
+                firingSolenoidRelay.set(Relay.Value.kOn);
+            }
+            else
+            {
+                firingSolenoidRelay.set(Relay.Value.kOff);
+            }
+            System.out.println("Relay state: " + firingSolenoidRelay.get().value);           
+     
             doArcade();
             printMoveStickAxis();
 
             Timer.delay(.01);
         }
-
     }
 
     public double ramp(double input) {
@@ -109,9 +129,9 @@ public class Main extends SimpleRobot {
     }
 
     private void doMecanum() {
-        double inX = moveStick.getX();
-        double inY = moveStick.getY();
-        double inTwist = moveStick.getTwist();
+        double inX = gamepad.getX();
+        double inY = gamepad.getY();
+        double inTwist = gamepad.getTwist();
 
         double outX = deadband(inX);
         double outY = deadband(inY);
@@ -128,8 +148,8 @@ public class Main extends SimpleRobot {
     }
 
     private void doTank() {
-        double inLeft = moveStick.getRawAxis(2);
-        double inRight = -moveStick.getRawAxis(4);
+        double inLeft = gamepad.getRawAxis(2);
+        double inRight = -gamepad.getRawAxis(4);
 
         double outLeft = ramp(deadband(inLeft));
         double outRight = ramp(deadband(inRight));
@@ -137,16 +157,16 @@ public class Main extends SimpleRobot {
         robotDrive.tankDrive(outLeft, outRight);
     }
     private void doArcade() {
-        double inMove = moveStick.getRawAxis(1);
-        double inRotate = moveStick.getRawAxis(2);
-        
+        double inMove = gamepad.getRawAxis(1);
+        double inRotate = gamepad.getRawAxis(2);
+        inRotate = -1 * inRotate;
         
         robotDrive.arcadeDrive(inMove,inRotate,true);
     }
 
     private void printMoveStickAxis() {
         for (int i = 0; i < 6; i++) {
-            System.out.println("Axis:" + i + " Value:" + moveStick.getRawAxis(i));
+            System.out.println("Axis:" + i + " Value:" + gamepad.getRawAxis(i));
         }
     }
 }
