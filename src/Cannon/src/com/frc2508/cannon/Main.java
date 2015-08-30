@@ -8,14 +8,11 @@ package com.frc2508.cannon;
 
 import edu.wpi.first.wpilibj.CANJaguar;
 import edu.wpi.first.wpilibj.DigitalInput;
-import edu.wpi.first.wpilibj.GenericHID;
-import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.Relay;
 import edu.wpi.first.wpilibj.RobotDrive;
 import edu.wpi.first.wpilibj.SimpleRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.can.CANTimeoutException;
-import edu.wpi.first.wpilibj.command.Command;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -33,17 +30,17 @@ public class Main extends SimpleRobot {
 
     }
     
-    Relay firingSolenoidRelay;
-        
-    CANJaguar[] motors = new CANJaguar[4];
+    Relay firingSolenoidRelay = new Relay(1, Relay.Direction.kForward);
+    Relay compressor1Relay = new Relay(2, Relay.Direction.kForward);
+    //Relay compressor2Relay = new Relay(3, Relay.Direction.kForward);
+    DigitalInput pressureSwitch = new DigitalInput(1);
+    
+    CANJaguar[] driveMotors = new CANJaguar[4];
 
-    RobotDrive robotDrive;
+    RobotDrive robotDrive = new RobotDrive(driveMotors[1], driveMotors[0], driveMotors[2], driveMotors[3]);
 
-    Gamepad gamepad;
-    /*
-     * This function is called once each time the robot enters operator control.
-     */
-
+    Gamepad gamepad = new Gamepad(1);
+    
     private void configJaguar(int index, int id) {
         try {
             CANJaguar jag = new CANJaguar(id, CANJaguar.ControlMode.kSpeed);
@@ -54,65 +51,77 @@ public class Main extends SimpleRobot {
             jag.setPID(.12, .02, 0);
             jag.enableControl();
 
-            motors[index] = jag;
+            driveMotors[index] = jag;
         } catch (CANTimeoutException ex) {
-            ex.printStackTrace();
+            ex.printStackTrace();            
         }
     }
 
-    public void configureJaguars() {
+    public void configureDrive() {
         configJaguar(0, 8);
         configJaguar(1, 2);
         configJaguar(2, 3);
         configJaguar(3, 4);
-    }
-    
-    public void configureSpikes(){
-        firingSolenoidRelay = new Relay(1, Relay.Direction.kForward);
-    }
-
-    public void operatorControl() {
-        configureJaguars();
-        configureSpikes();
         
-        gamepad = new Gamepad(1);
-
-        robotDrive = new RobotDrive(motors[1], motors[0], motors[2], motors[3]);
-
         robotDrive.setInvertedMotor(RobotDrive.MotorType.kRearLeft, true);
 
         double gearRatio = 12.0;
         double maxRPM = 5310.0;
-        robotDrive.setMaxOutput((maxRPM / gearRatio) / 4.5);
-
-        while (isOperatorControl() && isEnabled()) {
+        robotDrive.setMaxOutput((maxRPM / gearRatio) / 4.5);       
+    }
+    
+    /*
+     * This function is called once each time the robot enters operator control.
+     */
+    public void operatorControl() {
+        configureDrive();
+        
+        while (isOperatorControl() && isEnabled()) 
+        {
             //doMecanum();
-            //doTank();
-            boolean aButton = gamepad.getButtonA().get();
-            System.out.println("A Button state: " + aButton);
+            //doTank();   
+            checkPressure();
+            fire();
             
-            if(aButton)
-            {
-                firingSolenoidRelay.set(Relay.Value.kOn);
-            }
-            else
-            {
-                firingSolenoidRelay.set(Relay.Value.kOff);
-            }
-            System.out.println("Relay state: " + firingSolenoidRelay.get().value);           
-     
             doArcade();
             printMoveStickAxis();
 
             Timer.delay(.01);
         }
     }
+    
+    private boolean checkPressure()
+    {
+        boolean pressureSwitchValue = pressureSwitch.get();
+        System.out.println("Pressure switch state: " + pressureSwitchValue);
+        
+        Relay.Value relayValue = !pressureSwitchValue ? Relay.Value.kOff : Relay.Value.kOn;
+        
+        compressor1Relay.set(relayValue);
+        //compressor2Relay.set(relayValue);
+        
+        //System.out.println("Compressor 1 relay state: " + compressor1Relay.get().value);    
+        //System.out.println("Compressor 2 relay state: " + compressor2Relay.get().value);    
+        
+        return pressureSwitchValue;
+    }
+    
+    private void fire()
+    {
+        boolean aButton = gamepad.getButtonA().get();
+        System.out.println("A Button state: " + aButton);
 
-    public double ramp(double input) {
+        Relay.Value relayValue = aButton ? Relay.Value.kOn : Relay.Value.kOff;
+        firingSolenoidRelay.set(relayValue);
+        
+        //System.out.println("Firing relay state: " + firingSolenoidRelay.get().value);        
+    }
+
+    public static double ramp(double input) {
         if (input == 0) {
             return 0;
         }
-
+        
         return input * Math.abs(input);
     }
 
