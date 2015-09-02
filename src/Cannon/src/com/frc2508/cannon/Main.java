@@ -8,6 +8,7 @@ package com.frc2508.cannon;
 
 import edu.wpi.first.wpilibj.CANJaguar;
 import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.Relay;
 import edu.wpi.first.wpilibj.RobotDrive;
 import edu.wpi.first.wpilibj.SimpleRobot;
@@ -37,7 +38,7 @@ public class Main extends SimpleRobot {
     
     CANJaguar[] driveMotors = new CANJaguar[4];
 
-    RobotDrive robotDrive = new RobotDrive(driveMotors[1], driveMotors[0], driveMotors[2], driveMotors[3]);
+    RobotDrive robotDrive;
 
     Gamepad gamepad = new Gamepad(1);
     
@@ -62,7 +63,7 @@ public class Main extends SimpleRobot {
         configJaguar(1, 2);
         configJaguar(2, 3);
         configJaguar(3, 4);
-        
+        robotDrive = new RobotDrive(driveMotors[1], driveMotors[0], driveMotors[2], driveMotors[3]);
         robotDrive.setInvertedMotor(RobotDrive.MotorType.kRearLeft, true);
 
         double gearRatio = 12.0;
@@ -84,7 +85,7 @@ public class Main extends SimpleRobot {
             fire();
             
             doArcade();
-            printMoveStickAxis();
+            //printMoveStickAxis();
 
             Timer.delay(.01);
         }
@@ -95,7 +96,7 @@ public class Main extends SimpleRobot {
         boolean pressureSwitchValue = pressureSwitch.get();
         System.out.println("Pressure switch state: " + pressureSwitchValue);
         
-        Relay.Value relayValue = !pressureSwitchValue ? Relay.Value.kOff : Relay.Value.kOn;
+        Relay.Value relayValue = pressureSwitchValue ? Relay.Value.kOn : Relay.Value.kOff;
         
         compressor1Relay.set(relayValue);
         //compressor2Relay.set(relayValue);
@@ -108,10 +109,13 @@ public class Main extends SimpleRobot {
     
     private void fire()
     {
-        boolean aButton = gamepad.getButtonA().get();
-        System.out.println("A Button state: " + aButton);
-
-        Relay.Value relayValue = aButton ? Relay.Value.kOn : Relay.Value.kOff;
+        boolean leftTrigger = gamepad.getTrigger(GenericHID.Hand.kLeft);
+        boolean rightTrigger = gamepad.getTrigger(GenericHID.Hand.kRight);
+        
+        //System.out.println("A Button state: " + aButton);
+        //System.out.println("A Button state: " + aButton);
+        
+        Relay.Value relayValue = leftTrigger && rightTrigger ? Relay.Value.kOn : Relay.Value.kOff;
         firingSolenoidRelay.set(relayValue);
         
         //System.out.println("Firing relay state: " + firingSolenoidRelay.get().value);        
