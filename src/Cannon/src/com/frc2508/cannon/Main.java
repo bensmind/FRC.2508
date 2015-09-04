@@ -30,18 +30,19 @@ public class Main extends SimpleRobot {
     public void autonomous() {
 
     }
-    
+
     Relay firingSolenoidRelay = new Relay(1, Relay.Direction.kForward);
-    Relay compressor1Relay = new Relay(2, Relay.Direction.kForward);
-    //Relay compressor2Relay = new Relay(3, Relay.Direction.kForward);
+    Relay tiltRelay = new Relay(2, Relay.Direction.kBoth);
+    Relay compressor2Relay = new Relay(3, Relay.Direction.kForward);
+    Relay compressor1Relay = new Relay(4, Relay.Direction.kReverse);
     DigitalInput pressureSwitch = new DigitalInput(1);
-    
+
     CANJaguar[] driveMotors = new CANJaguar[4];
 
     RobotDrive robotDrive;
 
     Gamepad gamepad = new Gamepad(1);
-    
+
     private void configJaguar(int index, int id) {
         try {
             CANJaguar jag = new CANJaguar(id, CANJaguar.ControlMode.kSpeed);
@@ -54,7 +55,7 @@ public class Main extends SimpleRobot {
 
             driveMotors[index] = jag;
         } catch (CANTimeoutException ex) {
-            ex.printStackTrace();            
+            ex.printStackTrace();
         }
     }
 
@@ -68,56 +69,69 @@ public class Main extends SimpleRobot {
 
         double gearRatio = 12.0;
         double maxRPM = 5310.0;
-        robotDrive.setMaxOutput((maxRPM / gearRatio) / 4.5);       
+        robotDrive.setMaxOutput((maxRPM / gearRatio) / 1);
     }
-    
+
     /*
      * This function is called once each time the robot enters operator control.
      */
     public void operatorControl() {
         configureDrive();
-        
-        while (isOperatorControl() && isEnabled()) 
-        {
+
+        while (isOperatorControl() && isEnabled()) {
             //doMecanum();
             //doTank();   
             checkPressure();
-            fire();
-            
+            doFire();
+            doTilt();
             doArcade();
             //printMoveStickAxis();
 
-            Timer.delay(.01);
+            //Timer.delay(.01);
         }
     }
-    
-    private boolean checkPressure()
-    {
+
+    private boolean checkPressure() {
         boolean pressureSwitchValue = pressureSwitch.get();
-        System.out.println("Pressure switch state: " + pressureSwitchValue);
-        
-        Relay.Value relayValue = pressureSwitchValue ? Relay.Value.kOn : Relay.Value.kOff;
-        
+//        System.out.println("Pressure switch state: " + pressureSwitchValue);
+
+        Relay.Value relayValue = !pressureSwitchValue ? Relay.Value.kOn : Relay.Value.kOff;
+
         compressor1Relay.set(relayValue);
-        //compressor2Relay.set(relayValue);
-        
+        compressor2Relay.set(relayValue);
+
         //System.out.println("Compressor 1 relay state: " + compressor1Relay.get().value);    
         //System.out.println("Compressor 2 relay state: " + compressor2Relay.get().value);    
-        
         return pressureSwitchValue;
     }
     
-    private void fire()
-    {
-        boolean leftTrigger = gamepad.getTrigger(GenericHID.Hand.kLeft);
-        boolean rightTrigger = gamepad.getTrigger(GenericHID.Hand.kRight);
-        
-        //System.out.println("A Button state: " + aButton);
-        //System.out.println("A Button state: " + aButton);
-        
-        Relay.Value relayValue = leftTrigger && rightTrigger ? Relay.Value.kOn : Relay.Value.kOff;
+    private void doTilt(){
+        boolean upButton = gamepad.getButtonStateX();
+        boolean downButton = gamepad.getButtonStateA();
+        if(upButton){
+            tiltRelay.set(Relay.Value.kForward);
+        }
+        else if(downButton)
+        {
+            tiltRelay.set(Relay.Value.kReverse);
+        }
+        else
+        {
+            tiltRelay.set(Relay.Value.kOff);
+        }
+    }
+
+    private void doFire() {
+        boolean bButton = gamepad.getButtonStateB();
+        boolean leftTrigger = gamepad.getLeftTriggerClick().get();
+        boolean rightTrigger = gamepad.getRightTriggerClick().get();
+
+//        System.out.println("Left trigger state: " + leftTrigger);
+//        System.out.println("Right trigger state: " + rightTrigger);
+
+        Relay.Value relayValue = leftTrigger && rightTrigger && bButton ? Relay.Value.kOn : Relay.Value.kOff;
         firingSolenoidRelay.set(relayValue);
-        
+
         //System.out.println("Firing relay state: " + firingSolenoidRelay.get().value);        
     }
 
@@ -125,13 +139,25 @@ public class Main extends SimpleRobot {
         if (input == 0) {
             return 0;
         }
-        
+
         return input * Math.abs(input);
     }
 
     public double deadband(double input) {
         double deadBand = .05;
         return input > deadBand || input < -1 * deadBand ? input : 0;
+    }    
+    	
+    public Pair squareTheCircle(Pair input)
+    {
+        double shortSide = Math.min(Math.abs(input.x),Math.abs(input.y));
+        double longSide = Math.max(Math.abs(input.x),Math.abs(input.y));
+
+        double r = Math.sqrt((shortSide*shortSide)+(longSide*longSide));
+
+        double scaleFactor = (longSide/r);
+
+        return new Pair(input.x/scaleFactor,input.y/scaleFactor);
     }
 
     /**
@@ -139,7 +165,7 @@ public class Main extends SimpleRobot {
      */
     public void test() {
 
-    }
+    }    	
 
     private void doMecanum() {
         double inX = gamepad.getX();
@@ -169,12 +195,15 @@ public class Main extends SimpleRobot {
 
         robotDrive.tankDrive(outLeft, outRight);
     }
+
     private void doArcade() {
         double inMove = gamepad.getRawAxis(1);
         double inRotate = gamepad.getRawAxis(2);
         inRotate = -1 * inRotate;
+
+        Pair pair = squareTheCircle(new Pair(inMove,inRotate));
         
-        robotDrive.arcadeDrive(inMove,inRotate,true);
+        robotDrive.arcadeDrive(pair.x, pair.y, true);
     }
 
     private void printMoveStickAxis() {
