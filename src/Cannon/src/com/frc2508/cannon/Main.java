@@ -30,7 +30,11 @@ public class Main extends SimpleRobot {
     public void autonomous() {
 
     }
-
+    
+    /*Tunables*/
+    double deadBand = .05;
+    
+    /*Initialization*/
     Relay firingSolenoidRelay = new Relay(1, Relay.Direction.kForward);
     Relay tiltRelay = new Relay(2, Relay.Direction.kBoth);
     Relay compressor2Relay = new Relay(3, Relay.Direction.kForward);
@@ -143,8 +147,7 @@ public class Main extends SimpleRobot {
         return input * Math.abs(input);
     }
 
-    public double deadband(double input) {
-        double deadBand = .05;
+    public double deadband(double input) {        
         return input > deadBand || input < -1 * deadBand ? input : 0;
     }    
     	
@@ -197,11 +200,15 @@ public class Main extends SimpleRobot {
     }
 
     private void doArcade() {
-        double inMove = gamepad.getRawAxis(1);
-        double inRotate = gamepad.getRawAxis(2);
+        double inRotate = gamepad.getRawAxis(1);
         inRotate = -1 * inRotate;
-
-        Pair pair = squareTheCircle(new Pair(inMove,inRotate));
+        inRotate = deadband(inRotate);
+        
+        double inMove = gamepad.getRawAxis(2);
+        inMove = -1 * inMove;
+        inMove = deadband(inMove);
+        
+        Pair pair = squareTheCircle(new Pair(inRotate, inMove));
         
         robotDrive.arcadeDrive(pair.x, pair.y, true);
     }
