@@ -73,7 +73,7 @@ public class Main extends SimpleRobot {
 
         double gearRatio = 12.0;
         double maxRPM = 5310.0;
-        robotDrive.setMaxOutput((maxRPM / gearRatio) / 1);
+        robotDrive.setMaxOutput((maxRPM / gearRatio) / 50);
     }
 
     /*
@@ -225,15 +225,31 @@ public class Main extends SimpleRobot {
     private void doArcade(long millisPerTick) {
         double inRotate = gamepad.getRawAxis(1);
         inRotate = -1 * inRotate;
-        inRotate = deadband(inRotate);
         
         double inMove = gamepad.getRawAxis(2);
         inMove = -1 * inMove;
-        inMove = deadband(inMove);
         
-        Pair pair = squareTheCircle(new Pair(inRotate, inMove));
+        Pair pair = squareTheCircle(doTimeRamp(millisPerTick,new Pair(inRotate, inMove)));
         
-        robotDrive.arcadeDrive(pair.x, pair.y, true);
+        robotDrive.arcadeDrive(deadband(pair.x), deadband(pair.y), true);
+    }
+    
+    Pair rampPairThing = new Pair(0,0);
+    double slewRate = 1.0;
+    
+    private Pair doTimeRamp(long millisPerTick, Pair pair)
+    {
+        double posSlewLimit = slewRate*1000/millisPerTick;
+        double negSlewLimit = -posSlewLimit;
+        double xDiff = rampPairThing.x - pair.x;
+        double yDiff = rampPairThing.y - pair.y;
+       
+        xDiff = Math.max(negSlewLimit, Math.min(posSlewLimit, xDiff));
+        yDiff = Math.max(negSlewLimit, Math.min(posSlewLimit, yDiff));
+        
+        rampPairThing = new Pair(rampPairThing.x + xDiff, rampPairThing.y + yDiff);
+        
+        return rampPairThing;
     }
 
     private void printMoveStickAxis() {
