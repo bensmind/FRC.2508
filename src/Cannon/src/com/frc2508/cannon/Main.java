@@ -97,14 +97,35 @@ public class Main extends SimpleRobot {
         }
     }
 
+    private long compressorDelay = 1000;
     private boolean checkPressure(long millisPerTick) {
         boolean pressureSwitchValue = pressureSwitch.get();
-//        System.out.println("Pressure switch state: " + pressureSwitchValue);
+        //System.out.println("Pressure switch state: " + pressureSwitchValue);
 
         Relay.Value relayValue = !pressureSwitchValue ? Relay.Value.kOn : Relay.Value.kOff;
 
+        if(compressorDelay <= (1000 * millisPerTick) & compressorDelay > 0)
+        {
+            compressorDelay--;
+        }
+        else
+        {
+            compressorDelay = 1000;
+        }
+        
+        Relay.Value compressor2Value;
+        if(relayValue == Relay.Value.kOn && compressorDelay == 0)
+        {
+            compressor2Value =  Relay.Value.kOn;
+        }
+        else
+        {
+            compressor2Value = Relay.Value.kOff;
+        }
+        
         compressor1Relay.set(relayValue);
-        compressor2Relay.set(relayValue);
+        compressor2Relay.set(compressor2Value);
+
 
         //System.out.println("Compressor 1 relay state: " + compressor1Relay.get().value);    
         //System.out.println("Compressor 2 relay state: " + compressor2Relay.get().value);    
