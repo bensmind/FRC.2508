@@ -81,21 +81,23 @@ public class Main extends SimpleRobot {
      */
     public void operatorControl() {
         configureDrive();
-
+        long last = System.currentTimeMillis();
         while (isOperatorControl() && isEnabled()) {
-            //doMecanum();
-            //doTank();   
-            checkPressure();
-            doFire();
-            doTilt();
-            doArcade();
+            long millisPerTick = System.currentTimeMillis() - last;
+            last += millisPerTick;
+            //doMecanum(millisPerTick);
+            //doTank(millisPerTick);   
+            checkPressure(millisPerTick);
+            doFire(millisPerTick);
+            doTilt(millisPerTick);
+            doArcade(millisPerTick);
             //printMoveStickAxis();
 
             //Timer.delay(.01);
         }
     }
 
-    private boolean checkPressure() {
+    private boolean checkPressure(long millisPerTick) {
         boolean pressureSwitchValue = pressureSwitch.get();
 //        System.out.println("Pressure switch state: " + pressureSwitchValue);
 
@@ -109,7 +111,7 @@ public class Main extends SimpleRobot {
         return pressureSwitchValue;
     }
     
-    private void doTilt(){
+    private void doTilt(long millisPerTick){
         boolean upButton = gamepad.getButtonStateX();
         boolean downButton = gamepad.getButtonStateA();
         if(upButton){
@@ -125,7 +127,7 @@ public class Main extends SimpleRobot {
         }
     }
 
-    private void doFire() {
+    private void doFire(long millisPerTick) {
         boolean bButton = gamepad.getButtonStateB();
         boolean leftTrigger = gamepad.getLeftTriggerClick().get();
         boolean rightTrigger = gamepad.getRightTriggerClick().get();
@@ -170,7 +172,7 @@ public class Main extends SimpleRobot {
 
     }    	
 
-    private void doMecanum() {
+    private void doMecanum(long millisPerTick) {
         double inX = gamepad.getX();
         double inY = gamepad.getY();
         double inTwist = gamepad.getTwist();
@@ -189,7 +191,7 @@ public class Main extends SimpleRobot {
         robotDrive.mecanumDrive_Cartesian(outX, invertedOutY, invertedTwist, 0);
     }
 
-    private void doTank() {
+    private void doTank(long millisPerTick) {
         double inLeft = gamepad.getRawAxis(2);
         double inRight = -gamepad.getRawAxis(4);
 
@@ -199,7 +201,7 @@ public class Main extends SimpleRobot {
         robotDrive.tankDrive(outLeft, outRight);
     }
 
-    private void doArcade() {
+    private void doArcade(long millisPerTick) {
         double inRotate = gamepad.getRawAxis(1);
         inRotate = -1 * inRotate;
         inRotate = deadband(inRotate);
