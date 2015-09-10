@@ -15,3 +15,6 @@ hs_err_pid*
 
 #backup config
 *.bak.xml
+
+*.sym
+*.suite*
