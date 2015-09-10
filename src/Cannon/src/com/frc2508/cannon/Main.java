@@ -54,7 +54,7 @@ public class Main extends SimpleRobot {
             jag.setSafetyEnabled(false);
             //jag.configMaxOutputVoltage(100);
             jag.configEncoderCodesPerRev(360);
-            jag.setPID(.12, .02, 0);
+            jag.setPID(.12, .02, .05);
             jag.enableControl();
 
             driveMotors[index] = jag;
@@ -73,7 +73,7 @@ public class Main extends SimpleRobot {
 
         double gearRatio = 12.0;
         double maxRPM = 5310.0;
-        robotDrive.setMaxOutput((maxRPM / gearRatio) / 50);
+        robotDrive.setMaxOutput((maxRPM / gearRatio) / 1.5);
     }
 
     /*
@@ -85,6 +85,7 @@ public class Main extends SimpleRobot {
         while (isOperatorControl() && isEnabled()) {
             long millisPerTick = System.currentTimeMillis() - last;
             last += millisPerTick;
+            if(millisPerTick < 1)millisPerTick=1;
             //doMecanum(millisPerTick);
             //doTank(millisPerTick);   
             checkPressure(millisPerTick);
@@ -95,37 +96,34 @@ public class Main extends SimpleRobot {
 
             //Timer.delay(.01);
         }
+        rampPairThing = new Pair(0,0);
     }
 
-    private long compressorDelay = 1000;
+    private long compressorDelay = 0;
+    private long idleDelay = 0;
+    private Relay.Value command = Relay.Value.kOff;
     private boolean checkPressure(long millisPerTick) {
         boolean pressureSwitchValue = pressureSwitch.get();
         //System.out.println("Pressure switch state: " + pressureSwitchValue);
 
-        Relay.Value relayValue = !pressureSwitchValue ? Relay.Value.kOn : Relay.Value.kOff;
-
-        if(compressorDelay <= (1000 * millisPerTick) & compressorDelay > 0)
-        {
-            compressorDelay--;
-        }
-        else
-        {
-            compressorDelay = 1000;
-        }
+        Relay.Value request = !pressureSwitchValue ? Relay.Value.kOn : Relay.Value.kOff;
         
-        Relay.Value compressor2Value;
-        if(relayValue == Relay.Value.kOn && compressorDelay == 0)
-        {
-            compressor2Value =  Relay.Value.kOn;
+        if(compressorDelay > 0){
+            compressorDelay-=millisPerTick;
+            if(compressorDelay <= 0){
+                compressor1Relay.set(request);
+            }
         }
-        else
-        {
-            compressor2Value = Relay.Value.kOff;
-        }
+        if(idleDelay > 0) idleDelay -= millisPerTick;
         
-        compressor1Relay.set(relayValue);
-        compressor2Relay.set(compressor2Value);
-
+        if(command!=request){
+            if(request == Relay.Value.kOff || idleDelay <= 0){
+                idleDelay = 120000;
+                compressorDelay = 1000;
+                command = request;
+                compressor2Relay.set(request);
+            }
+        }
 
         //System.out.println("Compressor 1 relay state: " + compressor1Relay.get().value);    
         //System.out.println("Compressor 2 relay state: " + compressor2Relay.get().value);    
@@ -158,6 +156,7 @@ public class Main extends SimpleRobot {
 
         Relay.Value relayValue = leftTrigger && rightTrigger && bButton ? Relay.Value.kOn : Relay.Value.kOff;
         firingSolenoidRelay.set(relayValue);
+        if(relayValue == Relay.Value.kOn) idleDelay = 0;
 
         //System.out.println("Firing relay state: " + firingSolenoidRelay.get().value);        
     }
@@ -235,14 +234,14 @@ public class Main extends SimpleRobot {
     }
     
     Pair rampPairThing = new Pair(0,0);
-    double slewRate = 1.0;
+    double slewRate = .10;
     
     private Pair doTimeRamp(long millisPerTick, Pair pair)
     {
         double posSlewLimit = slewRate*1000/millisPerTick;
         double negSlewLimit = -posSlewLimit;
-        double xDiff = rampPairThing.x - pair.x;
-        double yDiff = rampPairThing.y - pair.y;
+        double xDiff = pair.x - rampPairThing.x;
+        double yDiff = pair.y - rampPairThing.y;
        
         xDiff = Math.max(negSlewLimit, Math.min(posSlewLimit, xDiff));
         yDiff = Math.max(negSlewLimit, Math.min(posSlewLimit, yDiff));
