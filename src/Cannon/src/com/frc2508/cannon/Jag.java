@@ -25,4 +25,16 @@ public class Jag extends CANJaguar
             this.enableControl();
     }
     
+    public static Jag CreateJag(int canAddress) {
+        Jag jag;
+         try{
+            jag = new Jag(canAddress);
+        }
+        catch (CANTimeoutException ex){
+            ex.printStackTrace();
+            jag = null;
+        }   
+         
+        return jag;
+    }    
 }

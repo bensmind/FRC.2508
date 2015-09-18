@@ -6,7 +6,6 @@
 package com.frc2508.cannon;
 
 import edu.wpi.first.wpilibj.RobotDrive;
-import edu.wpi.first.wpilibj.can.CANTimeoutException;
 
 /**
  *
@@ -15,24 +14,11 @@ import edu.wpi.first.wpilibj.can.CANTimeoutException;
 public class Drive extends RobotDrive{
       
     /*Tunables*/
-    final double deadBand = .05;
-    
-    private static Jag frontLeft;
-    private static Jag rearLeft;
-    private static Jag frontRight;
-    private static Jag rearRight;
-    
+    final double deadBand = .05;    
+ 
     public Drive() {
-        super(frontLeft, rearLeft, frontRight, rearRight);
-        try{
-            frontLeft = new Jag(2);
-            rearLeft = new Jag(8);
-            frontRight = new Jag(3);
-            rearRight = new Jag(4);            
-        }
-        catch (CANTimeoutException ex){
-            ex.printStackTrace();
-        }        
+        //Front Left, Rear Left, Front Right, Rear Right
+        super(Jag.CreateJag(2), Jag.CreateJag(8), Jag.CreateJag(3), Jag.CreateJag(4));
         
         this.setInvertedMotor(RobotDrive.MotorType.kRearLeft, true);
 
@@ -100,7 +86,7 @@ public class Drive extends RobotDrive{
         return rampPairThing;
     }
     
-        public static double ramp(double input) {
+    public static double ramp(double input) {
         if (input == 0) {
             return 0;
         }
@@ -108,11 +94,11 @@ public class Drive extends RobotDrive{
         return input * Math.abs(input);
     }
 
-    public double deadband(double input) {        
+    private double deadband(double input) {        
         return input > deadBand || input < -1 * deadBand ? input : 0;
     }    
     	
-    public Pair squareTheCircle(Pair input)
+    private Pair squareTheCircle(Pair input)
     {
         double shortSide = Math.min(Math.abs(input.x),Math.abs(input.y));
         double longSide = Math.max(Math.abs(input.x),Math.abs(input.y));
