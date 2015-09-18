@@ -33,32 +33,34 @@ public class Main extends SimpleRobot {
     Relay compressor1Relay = new Relay(4, Relay.Direction.kReverse);
     DigitalInput pressureSwitch = new DigitalInput(1);
 
-    Drive robotDrive;
+    Drive robotDrive = new Drive();
 
     Gamepad gamepad = new Gamepad(1);
-
+    
     /*
      * This function is called once each time the robot enters operator control.
      */
     public void operatorControl() {
-        robotDrive = new Drive();
-        long last = System.currentTimeMillis();
+        last = System.currentTimeMillis();
         while (isOperatorControl() && isEnabled()) {
-            long millisPerTick = System.currentTimeMillis() - last;
-            last += millisPerTick;
-            if(millisPerTick < 1)millisPerTick=1;
-            //doMecanum(millisPerTick);
-            //doTank(millisPerTick);   
+            long millisPerTick = IncrementMillis();
+            
             checkPressure(millisPerTick);
             doFire(millisPerTick);
             doTilt(millisPerTick);
+            
             robotDrive.DoArcade(millisPerTick, gamepad.getRawAxis(1), gamepad.getRawAxis(2));
-            //printMoveStickAxis();
-
-            //Timer.delay(.01);
         }
         
         robotDrive.ResetRampPair();        
+    }
+    
+    long last;
+    private long IncrementMillis(){
+        long millisPerTick = System.currentTimeMillis() - last;
+        last += millisPerTick;
+        if(millisPerTick < 1)millisPerTick=1;
+        return millisPerTick;
     }
 
     private long compressorDelay = 0;
@@ -112,9 +114,6 @@ public class Main extends SimpleRobot {
         boolean bButton = gamepad.getButtonStateB();
         boolean leftTrigger = gamepad.getLeftTriggerClick().get();
         boolean rightTrigger = gamepad.getRightTriggerClick().get();
-
-//        System.out.println("Left trigger state: " + leftTrigger);
-//        System.out.println("Right trigger state: " + rightTrigger);
 
         Relay.Value relayValue = leftTrigger && rightTrigger && bButton ? Relay.Value.kOn : Relay.Value.kOff;
         firingSolenoidRelay.set(relayValue);
