@@ -230,7 +230,7 @@ public class Main extends SimpleRobot {
         
         Pair pair = squareTheCircle(doTimeRamp(millisPerTick,new Pair(inRotate, inMove)));
         
-        robotDrive.arcadeDrive(deadband(pair.x), deadband(pair.y), true);
+        robotDrive.arcadeDrive(deadband(pair.x / 2), deadband(pair.y), true);
     }
     
     Pair rampPairThing = new Pair(0,0);
