@@ -45,9 +45,11 @@ public class Drive extends RobotDrive{
         inRotate = -1 * inRotate;
         inMove = -1 * inMove;
         
-        Pair pair = squareTheCircle(doTimeRamp(millisPerTick,new Pair(inRotate, inMove)));
+        Pair pair = squareTheCircle(doTimeRamp(millisPerTick, new Pair(inRotate, inMove)));
+        double outX = deadband(pair.x/2);
+        double outY = deadband(pair.y);
         
-        this.arcadeDrive(deadband(pair.x/2), deadband(pair.y), true);
+        this.arcadeDrive(outX, outY, true);
     }
     
     private void DoMecanum(long millisPerTick, double inX, double inY, double inTwist) {
