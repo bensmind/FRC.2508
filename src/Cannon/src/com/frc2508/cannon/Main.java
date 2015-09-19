@@ -127,8 +127,8 @@ public class Main extends SimpleRobot {
      */
     public void test() {
 
-    }    	
-
+    }
+    
     private void printMoveStickAxis() {
         for (int i = 0; i < 6; i++) {
             System.out.println("Axis:" + i + " Value:" + gamepad.getRawAxis(i));
